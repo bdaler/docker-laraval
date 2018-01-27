@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+
+# nginx section (web server)
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - fpm
+    volumes:
+      - ./:/var/www/laravel
+      - ./images/nginx/vhost.conf:/etc/nginx/conf.d/laravel.conf
+    working_dir:
+      /var/www
+
+# php section
+  fpm:
+    container_name: fpm
+    build: ./images/php-fpm
+    ports:
+      - "9000:9000"
+    links:
+      - db
+    volumes:
+      - ./:/var/www/laravel
+    working_dir:
+      /var/www/laravel
+
+# database section
+  db:
+    container_name: db
+    image: mysql:5.7
+    ports: 
+      - "3360:3360"
+    volumes:
+      - data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: pass
+
+# phpmyadmin section
+  pma:
+    container_name: pma
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports: 
+      - "8080:80"
+    volumes:
+      - /sessions
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+
+
+# The volumes directive specify a data volume, a persistent volume that won’t be 
+# destroyed when you stop the container, so your Mysql database won’t be lost.
+volumes:
+  data:
